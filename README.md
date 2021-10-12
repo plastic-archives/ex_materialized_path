@@ -30,8 +30,10 @@ Materialized Path Pattern stores node position as the path of its ancestors. For
 
 Search [Materialized Path Pattern](https://www.google.com.hk/search?q=Materialized%20Path%20Pattern) for more information.
 
+## Acknowledgements
+
+This is a fork of [ecto_materialized_path](https://github.com/asiniy/ecto_materialized_path). Thanks, [@asiniy](https://github.com/asiniy).
+
 ## License
 
 Apache 2.0
-
-> This is a fork of [ecto_materialized_path](https://github.com/asiniy/ecto_materialized_path).
