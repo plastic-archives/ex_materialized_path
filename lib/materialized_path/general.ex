@@ -18,6 +18,9 @@ defmodule MaterializedPath.General do
 
   Use `use MaterializedPath.General` with following options for a module:
   - `column_name` (default: `:path`) - the name of field which stores tree structure.
+  - `key_type` (default: `:atom`) - the type of field key, available values:
+    + `:atom`
+    + `:string`
 
   Then, the module will provide the general functions.
 
@@ -36,8 +39,13 @@ defmodule MaterializedPath.General do
 
   defmacro __using__(opts) do
     column_name = Keyword.get(opts, :column_name, :path)
+    key_type = Keyword.get(opts, :key_type, :atom)
+
+    column_name = if key_type == :string, do: Atom.to_string(column_name), else: column_name
+    id_name = if key_type == :string, do: "id", else: :id
 
     quote bind_quoted: [
+            id_name: id_name,
             column_name: column_name
           ] do
       @type n :: %{optional(any) => any}
@@ -48,7 +56,7 @@ defmodule MaterializedPath.General do
       Return the parent node of a node.
       """
       @spec parent(nodes, n) :: n | nil
-      def parent(nodes, %{unquote(:"#{column_name}") => path} = node) when is_list(path) do
+      def parent(nodes, %{unquote(column_name) => path} = node) when is_list(path) do
         id = parent_id(node)
         get_node(nodes, id)
       end
@@ -59,7 +67,7 @@ defmodule MaterializedPath.General do
       The parent id of a root node is `nil`.
       """
       @spec parent_id(n) :: pos_integer | nil
-      def parent_id(%{unquote(:"#{column_name}") => path}) when is_list(path) do
+      def parent_id(%{unquote(column_name) => path}) when is_list(path) do
         List.last(path)
       end
 
@@ -69,7 +77,7 @@ defmodule MaterializedPath.General do
       The root of a root node is itself.
       """
       @spec root(nodes, n) :: n
-      def root(nodes, %{unquote(:"#{column_name}") => path} = node) when is_list(path) do
+      def root(nodes, %{unquote(column_name) => path} = node) when is_list(path) do
         id = root_id(node)
         get_node(nodes, id)
       end
@@ -80,27 +88,27 @@ defmodule MaterializedPath.General do
       The root id of a root node is the id of itself.
       """
       @spec root_id(n) :: integer
-      def root_id(%{:id => id, unquote(:"#{column_name}") => []}) when is_integer(id),
+      def root_id(%{unquote(id_name) => id, unquote(column_name) => []}) when is_integer(id),
         do: id
 
-      def root_id(%{unquote(:"#{column_name}") => path}) when is_list(path),
+      def root_id(%{unquote(column_name) => path}) when is_list(path),
         do: List.first(path)
 
       @doc """
       Return `true` if current node is a root node. Otherwise, return `false`.
       """
       @spec root?(n) :: boolean
-      def root?(%{unquote(:"#{column_name}") => []}),
+      def root?(%{unquote(column_name) => []}),
         do: true
 
-      def root?(%{unquote(:"#{column_name}") => path}) when is_list(path),
+      def root?(%{unquote(column_name) => path}) when is_list(path),
         do: false
 
       @doc """
       Return all ancestors of a node.
       """
       @spec ancestors(nodes, n) :: nodes
-      def ancestors(nodes, %{unquote(:"#{column_name}") => path} = node) when is_list(path) do
+      def ancestors(nodes, %{unquote(column_name) => path} = node) when is_list(path) do
         ids = ancestor_ids(node)
         get_nodes(nodes, ids)
       end
@@ -109,14 +117,14 @@ defmodule MaterializedPath.General do
       Return a list of ancestor ids of a node.
       """
       @spec ancestor_ids(n) :: [pos_integer]
-      def ancestor_ids(%{unquote(:"#{column_name}") => path}) when is_list(path),
+      def ancestor_ids(%{unquote(column_name) => path}) when is_list(path),
         do: path
 
       @doc """
       Return a list of nodes whose id is included in `path_ids`.
       """
       @spec path(nodes, n) :: nodes
-      def path(nodes, %{unquote(:"#{column_name}") => path} = node) when is_list(path) do
+      def path(nodes, %{unquote(column_name) => path} = node) when is_list(path) do
         ids = path_ids(node)
         get_nodes(nodes, ids)
       end
@@ -125,18 +133,19 @@ defmodule MaterializedPath.General do
       Return a list of path ids which starts with the root id and ends with the node's own id.
       """
       @spec path_ids(n) :: [pos_integer]
-      def path_ids(%{:id => id, unquote(:"#{column_name}") => path} = node) when is_list(path),
-        do: ancestor_ids(node) ++ [id]
+      def path_ids(%{unquote(id_name) => id, unquote(column_name) => path} = node)
+          when is_list(path),
+          do: ancestor_ids(node) ++ [id]
 
       @doc """
       Return all children of a node.
       """
       @spec children(nodes, n) :: nodes
-      def children(nodes, %{unquote(:"#{column_name}") => path} = node) when is_list(path) do
+      def children(nodes, %{unquote(column_name) => path} = node) when is_list(path) do
         path = path_ids(node)
 
         Enum.filter(nodes, fn node ->
-          Map.get(node, unquote(:"#{column_name}")) == path
+          Map.get(node, unquote(column_name)) == path
         end)
       end
 
@@ -144,9 +153,9 @@ defmodule MaterializedPath.General do
       Return all siblings of a node.
       """
       @spec siblings(nodes, n) :: nodes
-      def siblings(nodes, %{unquote(:"#{column_name}") => path}) when is_list(path) do
+      def siblings(nodes, %{unquote(column_name) => path}) when is_list(path) do
         Enum.filter(nodes, fn node ->
-          Map.get(node, unquote(:"#{column_name}")) == path
+          Map.get(node, unquote(column_name)) == path
         end)
       end
 
@@ -154,12 +163,12 @@ defmodule MaterializedPath.General do
       Return all descendants of a node.
       """
       @spec descendants(nodes, n) :: nodes
-      def descendants(nodes, %{unquote(:"#{column_name}") => path} = node) when is_list(path) do
+      def descendants(nodes, %{unquote(column_name) => path} = node) when is_list(path) do
         path = path_ids(node)
 
         Enum.filter(nodes, fn node ->
           node
-          |> Map.get(unquote(:"#{column_name}"))
+          |> Map.get(unquote(column_name))
           |> List.starts_with?(path)
         end)
       end
@@ -168,7 +177,7 @@ defmodule MaterializedPath.General do
       Return current node and all its descendants.
       """
       @spec subtree(nodes, n) :: nodes
-      def subtree(nodes, %{unquote(:"#{column_name}") => path} = node) when is_list(path) do
+      def subtree(nodes, %{unquote(column_name) => path} = node) when is_list(path) do
         descendants = descendants(nodes, node)
         [node | descendants]
       end
@@ -179,7 +188,7 @@ defmodule MaterializedPath.General do
       It returns `0` for root node.
       """
       @spec depth(n) :: non_neg_integer
-      def depth(%{unquote(:"#{column_name}") => path}) when is_list(path),
+      def depth(%{unquote(column_name) => path}) when is_list(path),
         do: length(path)
 
       @doc """
@@ -257,7 +266,7 @@ defmodule MaterializedPath.General do
       defp nodes_by_depth_map([], processed_map), do: processed_map
 
       defp nodes_by_depth_map([node | tail], before_node_processed_map) do
-        path = Map.get(node, unquote(:"#{column_name}"))
+        path = Map.get(node, unquote(column_name))
         node_depth = depth(node)
 
         node_at_depth = Map.get(before_node_processed_map, node_depth, []) ++ [node]
@@ -278,7 +287,9 @@ defmodule MaterializedPath.General do
           nodes_depth_map
           |> Map.get(next_depth_level, [])
           |> Enum.filter(fn possible_children ->
-            Map.get(possible_children, unquote(:"#{column_name}")) |> List.last() == node.id
+            possible_children
+            |> Map.get(unquote(column_name))
+            |> List.last() == get_node_id(node)
           end)
           |> Enum.reduce(
             {[], total_count},
@@ -293,34 +304,40 @@ defmodule MaterializedPath.General do
         {list ++ [{node, node_children}], length(node_children) + node_children_count}
       end
 
-      defp check_nodes_arrangement_correctness(tree, tree_nodes_count, nodes_list) do
-        nodes_count = length(nodes_list)
+      defp check_nodes_arrangement_correctness(tree, tree_nodes_count, nodes) do
+        nodes_count = length(nodes)
 
         if tree_nodes_count != nodes_count do
-          nodes_list_ids = nodes_list |> Enum.map(&Map.get(&1, :id))
+          nodes_ids = Enum.map(nodes, &get_node_id/1)
 
           tree_node_ids =
-            Enum.map(tree, fn element -> get_node_ids_from_tree(element) end) |> List.flatten()
+            tree
+            |> Enum.map(fn element -> get_node_ids_from_tree(element) end)
+            |> List.flatten()
 
-          missing_node_ids = nodes_list_ids -- tree_node_ids
+          missing_node_ids = nodes_ids -- tree_node_ids
 
           raise ArgumentError,
                 "nodes with ids [#{Enum.join(missing_node_ids, ", ")}] can't be arranged"
         end
       end
 
-      defp get_node_ids_from_tree({node, []}), do: [node.id]
+      defp get_node_ids_from_tree({node, []}), do: [get_node_id(node)]
 
       defp get_node_ids_from_tree({node, list}) do
-        [node.id, Enum.map(list, &get_node_ids_from_tree(&1))]
+        [get_node_id(node), Enum.map(list, &get_node_ids_from_tree(&1))]
       end
 
       defp get_node(nodes, id) do
-        Enum.find(nodes, fn node -> node.id == id end)
+        Enum.find(nodes, fn node -> get_node_id(node) == id end)
       end
 
       defp get_nodes(nodes, ids) do
-        Enum.filter(nodes, fn node -> node.id in ids end)
+        Enum.filter(nodes, fn node -> get_node_id(node) in ids end)
+      end
+
+      defp get_node_id(node) do
+        Map.get(node, unquote(id_name))
       end
     end
   end
