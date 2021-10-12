@@ -10,7 +10,7 @@ Add `materialized_path` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:materialized_path, "~> 0.1.0"}]
+  [{:materialized_path, "~> 0.2.0"}]
 end
 ```
 
