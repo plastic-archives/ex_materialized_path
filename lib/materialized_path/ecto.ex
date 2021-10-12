@@ -1,4 +1,104 @@
 defmodule MaterializedPath.Ecto do
+  @moduledoc """
+  `MaterializedPath.Ecto` and its friends help to store and organize database records
+  in a tree structure.
+
+  It uses a single database column, using the materialized path pattern. It exposes
+  all the standard tree structure relations, such as:
+  + ancestors
+  + parent
+  + root
+  + children
+  + siblings
+  + descendants
+  + depth
+  + ...
+
+  All of them can be fetched in a single SQL query.
+
+  ## Supported Databases
+
+  - PostgreSQL `>= 9.4`
+  - MySQL `>= 5.7.8`
+
+  ## Basic Usage
+
+  ## Available Options
+
+  Use `use MaterializedPath.Ecto` with following options for a schema:
+  - `column_name` (default: `:path`) - the name of field which stores tree structure.
+  - `adapter` - current available adapters:
+    - `MaterizalizedPath.Ecto.Adapters.Postgres`
+    - `MaterizalizedPath.Ecto.Adapters.MyXQL`
+
+  > Why do you name the adapter of MySQL in this way? Because `Ecto` is using
+  > such a name, and I want to keep the harmony between `MaterializedPath.Ecto`
+  > and `Ecto`.
+
+  ### PostgreSQL
+
+  Create a migration:
+
+  ```elixir
+  defmodule DemoApp.Repo.Migrations.CreateNode do
+    use Ecto.Migration
+
+    def change do
+      create table(:nodes) do
+        # ...
+        add :path, {:array, :integer}, null: false
+      end
+    end
+  end
+  ```
+
+  Create a schema:
+
+  ```elixir
+  defmodule DemoApp.Tree.Node do
+    use MaterializedPath.Ecto,
+      column_name: :path,
+      adapter: MaterizalizedPath.Ecto.Adapters.Postgres
+
+    schema "nodes" do
+      # ...
+      field :path, MaterializedPath.Ecto.Path, default: [] # default is important
+    end
+  end
+  ```
+
+  ### MySQL
+
+  Create a migration:
+
+  ```elixir
+  defmodule DemoApp.MyXQLRepo.Migrations.CreateNode do
+    use Ecto.Migration
+
+    def change do
+      create table(:nodes) do
+        add :path, :json, null: false
+      end
+    end
+  end
+  ```
+
+  Create a schema:
+
+  ```elixir
+  defmodule DemoApp.Tree.Node do
+    use MaterializedPath.Ecto,
+      column_name: :path,
+      adapter: MaterizalizedPath.Ecto.Adapters.MyXQL
+
+    schema "nodes" do
+      # ...
+      field :path, MaterializedPath.Ecto.Path, default: [] # default is important
+    end
+  end
+  ```
+  """
+
   defmacro __using__(opts) do
     column_name = Keyword.get(opts, :column_name, :path)
     adapter = Keyword.fetch!(opts, :adapter)

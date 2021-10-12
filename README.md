@@ -1,21 +1,37 @@
 # MaterializedPath
 
-**TODO: Add description**
+![badge](https://img.shields.io/hexpm/v/materialized_path.svg)
+
+> An implementation of Materialized Path Pattern, including supports for general-purpose usage and Ecto."
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `materialized_path` to your list of dependencies in `mix.exs`:
+Add `materialized_path` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [
-    {:materialized_path, "~> 0.1.0"}
-  ]
+  [{:materialized_path, "~> 0.1.0"}]
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/materialized_path](https://hexdocs.pm/materialized_path).
+## Docs
 
+Visit [docs hosted by HexDocs](https://hexdocs.pm/materialized_path).
+
+## About Materialized Path Pattern
+
+Materialized Path Pattern stores node position as the path of its ancestors. For example:
+
+```elixir
+%Node{ path: [] } # no ancestors => is root
+%Node{ path: [1] } # this node is a child of node with id == 1
+%Node{ path: [1, 3] } # this node is a child of the node with id == 3, which in its turn is the child of the node with id == 1
+```
+
+Search [Materialized Path Pattern](https://www.google.com.hk/search?q=Materialized%20Path%20Pattern) for more information.
+
+## License
+
+Apache 2.0
+
+> This is a fork of [ecto_materialized_path](https://github.com/asiniy/ecto_materialized_path).
