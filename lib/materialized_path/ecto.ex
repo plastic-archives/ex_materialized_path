@@ -5,12 +5,13 @@ defmodule MaterializedPath.Ecto do
 
   It uses a single database column, using the materialized path pattern. It exposes
   all the standard tree structure relations, such as:
-  + ancestors
   + parent
   + root
+  + ancestors
   + children
   + siblings
   + descendants
+  + subtree
   + depth
   + ...
 
@@ -23,8 +24,6 @@ defmodule MaterializedPath.Ecto do
 
   ## Basic Usage
 
-  ## Available Options
-
   Use `use MaterializedPath.Ecto` with following options for a schema:
   - `column_name` (default: `:path`) - the name of field which stores tree structure.
   - `adapter` - current available adapters:
@@ -35,7 +34,7 @@ defmodule MaterializedPath.Ecto do
   > such a name, and I want to keep the harmony between `MaterializedPath.Ecto`
   > and `Ecto`.
 
-  ### PostgreSQL
+  ## An Example for PostgreSQL
 
   Create a migration:
 
@@ -67,7 +66,7 @@ defmodule MaterializedPath.Ecto do
   end
   ```
 
-  ### MySQL
+  ## An Example for MySQL
 
   Create a migration:
 
