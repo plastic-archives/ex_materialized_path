@@ -30,7 +30,9 @@ defmodule MaterializedPath.General do
 
   ```elixir
   defmodule MyApp.TreeHelper do
-    use MaterializedPath.General
+    use MaterializedPath.General,
+      column_name: :path,
+      key_type: :string
   end
   ```
 
